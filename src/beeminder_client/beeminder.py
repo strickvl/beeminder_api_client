@@ -1,7 +1,7 @@
 import requests
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 from pydantic import ValidationError
-from .models import BeeminderGoal, BeeminderUser, Datapoint
+from beeminder_client.models import BeeminderGoal, BeeminderUser, Datapoint
 
 
 class BeeminderAPI:
@@ -29,7 +29,7 @@ class BeeminderAPI:
         self.api_key = api_key
         self.default_user = default_user
 
-    def _get(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def _get(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Union[List[Dict[str, Any]],Dict[str, Any]]:
         """
         Internal method for making GET requests to the Beeminder API.
 

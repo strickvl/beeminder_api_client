@@ -2,8 +2,8 @@ import curses
 import datetime
 import webbrowser
 from typing import List, Optional, Tuple
-from .beeminder import BeeminderAPI
-from .models import BeeminderGoal
+from beeminder_client.beeminder import BeeminderAPI
+from beeminder_client.models import BeeminderGoal
 
 
 
@@ -330,6 +330,41 @@ class BeeminderCLI:
                 elif key == curses.KEY_DOWN:
                     self.detail_offset += 1
 
+    def create_datapoint(self, stdscr, goal: BeeminderGoal):
+        """Handle datapoint creation workflow"""
+        input_window = InputWindow(stdscr)
+
+        # Get value
+        success, value_str = input_window.get_input("Enter value (number):", numeric=True)
+        if not success:
+            return False
+
+        # Get comment
+        success, comment = input_window.get_input("Enter comment (optional):")
+        if not success:
+            return False
+
+        try:
+            value = float(value_str)
+            # Create the datapoint
+            self.api.create_datapoint(
+                user=None,
+                goal_slug=goal.slug,
+                value=value,
+                comment=comment if comment else None
+            )
+            return True
+        except Exception as e:
+            # Show error message
+            error_win = InputWindow(stdscr)
+            error_win.window.clear()
+            error_win.window.box()
+            error_win.window.addstr(1, 2, f"Error creating datapoint: {str(e)}")
+            error_win.window.addstr(2, 2, "Press any key to continue...")
+            error_win.window.refresh()
+            error_win.window.getch()
+            return False
+
 
 def main():
     import os
@@ -339,6 +374,9 @@ def main():
     if not api_key:
         print("Please set BEEMINDER_API_KEY environment variable")
         return
+
+    if not username:
+        print("Please set BEEMINDER_USERNAME environment variable")
 
     app = BeeminderCLI(api_key=api_key, username=username)
     curses.wrapper(app.run)
